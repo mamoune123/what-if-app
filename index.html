@@ -505,14 +505,12 @@ async function renderEpisode(n, keepDraft) {
 
   const canReply = !st.live && s !== 'video-prete' && s !== 'echec';
   const actions = canReply
-    ? `<div class="sticky-actions stack">
-        ${scriptC ? '<button class="btn green" id="approve">✅ Valider et lancer la vidéo</button>' : ''}
-        <div class="card" style="padding:14px">
-          <label class="faint" for="change">${scriptC ? 'Ou écris ce que tu veux changer' : 'Ton message à Claude'}</label>
+    ? `<div class="card" style="padding:14px">
+          <label class="faint" for="change">${scriptC ? 'Tu veux changer quelque chose ? Écris-le ici (ou « ok » pour valider)' : 'Ton message à Claude'}</label>
           <textarea id="change" rows="3" placeholder="Ex. : plus drôle au jour 2, change la fin, un autre chiffre…">${esc(draft)}</textarea>
           <div style="margin-top:10px"><button class="btn ghost small" id="sendChange">✏️ Envoyer</button></div>
         </div>
-       </div>`
+        ${scriptC ? '<div class="sticky-actions"><button class="btn green" id="approve">✅ Valider et lancer la vidéo</button></div>' : ''}`
     : '';
 
   box.innerHTML = `
