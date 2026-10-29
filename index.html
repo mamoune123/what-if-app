@@ -235,7 +235,13 @@ const chip = (key, text) => {
   const s = STATUS[key];
   return `<span class="chip ${s.live ? 'live' : ''}" style="color:${s.color};background:color-mix(in srgb, ${s.color} 14%, transparent)"><span class="dot"></span>${esc(text || s.label)}</span>`;
 };
-const confirmCredits = (what) => confirm(`${what}\n\nÇa utilise environ 1 000 crédits ElevenLabs (la voix).`);
+const confirmCredits = (what, story) => confirm(`${what}\n\nÇa utilise environ ${story ? '1 500' : '1 000'} crédits ElevenLabs (la voix${story ? ' de tous les personnages' : ''}).`);
+const MODES = {
+  guided: { label: 'Guidé', hint: 'Une étape à la fois : hooks, plan, script, fins, storyboard, brouillon', create: '✍️ Proposer 3 hooks', toast: 'C’est parti : Claude écrit 3 hooks' },
+  quick: { label: '⚡ Rapide', hint: 'Sujet → script → ok → vidéo, sans les étapes', create: '✍️ Écrire le script', toast: 'C’est parti : Claude écrit le script' },
+  story: { label: '📖 Histoire', hint: 'Une série : un héros, des personnages qui parlent, des parties de 3 à 4 min', create: '✍️ Proposer 3 ouvertures', toast: 'C’est parti : Claude écrit 3 ouvertures' },
+};
+const modeTag = (m) => (m === 'quick' ? '⚡ rapide' : m === 'story' ? '📖 histoire' : '');
 
 // ---------- GitHub ----------
 async function gh(path, opts = {}) {
@@ -320,6 +326,7 @@ const DEMO_DATA = (() => {
     { number: 12, title: 'Et si tu pouvais voler ?', labels: ['script-pret'], updated_at: iso(25), created_at: iso(120), body: '<!-- whatif-settings {"mode":"guided","quality":"standard"} -->' },
     { number: 11, title: 'Et si tu ne pouvais plus mentir ?', labels: ['script-pret'], updated_at: iso(40), created_at: iso(200), body: '<!-- whatif-settings {"mode":"guided","quality":"standard"} -->' },
     { number: 10, title: 'Et si tu devenais invisible ?', labels: ['video-en-cours'], updated_at: iso(8), created_at: iso(300), body: '<!-- whatif-settings {"mode":"quick","quality":"standard"} -->' },
+    { number: 8, title: 'Et si tu entendais chaque mensonge ?', labels: ['video-prete'], updated_at: iso(90), created_at: iso(60 * 40), body: '<!-- whatif-settings {"mode":"story","quality":"standard"} -->' },
     { number: 9, title: 'Et si un jour tu entendais les pensées des gens ?', labels: ['video-prete'], updated_at: iso(60 * 26), created_at: iso(60 * 30), body: '' },
   ];
   const comments = {
@@ -331,6 +338,7 @@ const DEMO_DATA = (() => {
     12: [me(60, '/script ok'), bot(25, `## 🎭 3 fins possibles\n\n${endings.map((e) => `**${e.id}. ${e.title}**\n${e.text}`).join('\n\n')}\n\n<!-- whatif ${JSON.stringify({ stage: 'ending', options: endings })} -->`)],
     11: [me(90, '/ending 2'), bot(40, `## 🎞️ Le storyboard est prêt : ${shots.length} plans\n\n<!-- whatif ${JSON.stringify({ stage: 'board', ref: 'media/episode-11', path: 'board', v: '1', shots })} -->`)],
     10: [me(9, 'ok'), bot(8, "🎬 C'est parti : voix, plans, son, puis rendu en parallèle. Compte environ 45 min.")],
+    8: [me(200, '/draft ok'), bot(90, '✅ **La vidéo est prête** : [mensonges-1-final.mp4](https://github.com)\n\nPartie 1 · 3 min 31 · 92 plans · 1 480 crédits ElevenLabs\n\n<!-- whatif {"stage":"done"} -->')],
     9: [me(60 * 28, 'ok'), bot(60 * 26, '✅ **La vidéo est prête** : [pensees-final.mp4](https://github.com)\n\n2 min 17 · 58 plans · 970 crédits ElevenLabs\n\n<!-- whatif {"stage":"done"} -->')],
   };
   return { issues, comments };
@@ -456,7 +464,7 @@ function viewSettings() {
 
 // ---------- home ----------
 async function viewHome() {
-  const quick = LS.get('wi_quick') === '1';
+  const mode = MODES[LS.get('wi_mode')] ? LS.get('wi_mode') : LS.get('wi_quick') === '1' ? 'quick' : 'guided';
   const quality = LS.get('wi_quality', 'standard');
   const pre = state.prefill || {};
   state.prefill = null;
@@ -467,10 +475,12 @@ async function viewHome() {
         <div class="label">Nouvelle vidéo</div>
         <textarea id="topic" class="topic-input" rows="2" placeholder="Et si tu pouvais…" style="margin-top:6px">${esc(pre.title || '')}</textarea>
         <textarea id="notes" rows="2" placeholder="Une envie, un angle ? (facultatif)" style="font-size:15px">${esc(pre.notes || '')}</textarea>
-        <label class="switch"><div><b>⚡ Mode rapide</b><div class="faint">Sujet → script → ok → vidéo, sans les étapes</div></div><input type="checkbox" id="quick" ${quick ? 'checked' : ''}><span class="knob"></span></label>
+        <div><div class="faint" style="margin-bottom:6px">Mode</div>
+          <div class="seg" id="mode">${Object.entries(MODES).map(([k, m]) => `<button data-m="${k}" class="${k === mode ? 'on' : ''}">${m.label}</button>`).join('')}</div>
+          <div class="faint" id="modeHint" style="margin-top:6px">${MODES[mode].hint}</div></div>
         <div><div class="faint" style="margin-bottom:6px">Qualité de l’animation</div>
           <div class="seg" id="quality"><button data-q="standard" class="${quality === 'standard' ? 'on' : ''}">Standard · rapide</button><button data-q="max" class="${quality === 'max' ? 'on' : ''}">Max · plus soignée</button></div></div>
-        <button class="btn" id="create">✍️ ${quick ? 'Écrire le script' : 'Proposer 3 hooks'}</button>
+        <button class="btn" id="create">${MODES[mode].create}</button>
       </div>
       <div class="row spread" style="margin-top:26px"><h2>Tes épisodes</h2><button class="iconbtn" id="refresh" aria-label="Rafraîchir">↻</button></div>
       <div class="list" id="list"><div class="card faint">Chargement…</div></div>
@@ -478,10 +488,13 @@ async function viewHome() {
   const topic = document.getElementById('topic');
   const create = document.getElementById('create');
   topic.addEventListener('focus', () => { if (!topic.value) topic.value = 'Et si '; });
-  document.getElementById('quick').onchange = (e) => {
-    LS.set('wi_quick', e.target.checked ? '1' : '0');
-    create.textContent = e.target.checked ? '✍️ Écrire le script' : '✍️ Proposer 3 hooks';
-  };
+  const modeNow = () => document.querySelector('#mode button.on').dataset.m;
+  document.querySelectorAll('#mode button').forEach((b) => (b.onclick = () => {
+    document.querySelectorAll('#mode button').forEach((x) => x.classList.toggle('on', x === b));
+    LS.set('wi_mode', b.dataset.m);
+    document.getElementById('modeHint').textContent = MODES[b.dataset.m].hint;
+    create.textContent = MODES[b.dataset.m].create;
+  }));
   document.querySelectorAll('#quality button').forEach((b) => (b.onclick = () => {
     document.querySelectorAll('#quality button').forEach((x) => x.classList.toggle('on', x === b));
     LS.set('wi_quality', b.dataset.q);
@@ -490,14 +503,14 @@ async function viewHome() {
   create.onclick = async () => {
     const title = topic.value.trim();
     if (title.length < 8 || /^et si\s*$/i.test(title)) return toast('Écris ton « Et si… » d’abord.');
-    const settings = { mode: document.getElementById('quick').checked ? 'quick' : 'guided', quality: LS.get('wi_quality', 'standard') };
+    const settings = { mode: modeNow(), quality: LS.get('wi_quality', 'standard') };
     const notes = document.getElementById('notes').value.trim();
     create.disabled = true;
     create.innerHTML = '<span class="spinner"></span> Envoi…';
     try {
       const is = await gh(`${repoPath()}/issues`, { method: 'POST', body: JSON.stringify({ title, body: `${notes}\n\n<!-- whatif-settings ${JSON.stringify(settings)} -->`.trim() }) });
       buzz();
-      toast(settings.mode === 'quick' ? 'C’est parti : Claude écrit le script' : 'C’est parti : Claude écrit 3 hooks');
+      toast(MODES[settings.mode].toast);
       route(`#/ep/${is.number}`);
     } catch {
       create.disabled = false;
@@ -525,7 +538,7 @@ async function loadList(manual) {
         <div class="thumb">${STATUS[s].emoji}</div>
         <div style="min-width:0;flex:1">
           <div class="title">${esc(i.title)}</div>
-          <div class="meta row">${chip(s)}${set.mode === 'quick' ? '<span class="tag">⚡ rapide</span>' : ''}${set.quality === 'max' ? '<span class="tag">✨ max</span>' : ''}<span class="faint" style="margin-left:auto">${ago(i.updated_at)}</span></div>
+          <div class="meta row">${chip(s)}${modeTag(set.mode) ? `<span class="tag">${modeTag(set.mode)}</span>` : ''}${set.quality === 'max' ? '<span class="tag">✨ max</span>' : ''}<span class="faint" style="margin-left:auto">${ago(i.updated_at)}</span></div>
         </div></div>`;
     }).join('');
     if (manual) toast('À jour');
@@ -655,6 +668,7 @@ function situation(issue, comments) {
 function estimate(lastMine, lab) {
   const c = (lastMine && lastMine.body.trim().toLowerCase()) || '';
   if (lab === 'script-en-cours') {
+    if (/^\/next/.test(c)) return { min: 8, text: 'Claude met à jour la bible de la série et écrit 3 ouvertures pour la partie suivante.' };
     if (/^\/(ending \d|board)/.test(c)) return { min: 25, text: 'Claude dessine le storyboard plan par plan. Gratuit : pas encore de voix.' };
     return { min: 6, text: 'Claude écrit et vérifie les chiffres.' };
   }
@@ -696,7 +710,7 @@ async function renderEpisode(n, keep) {
   } else if (sit.lab === 'script-pret' && sit.stage) {
     body += stageView(sit, set, drafts);
   } else if (sit.lab === 'video-prete') {
-    body += doneView(sit, comments, drafts);
+    body += doneView(sit, comments, drafts, set);
   }
 
   const history = sit.mine.length
@@ -705,10 +719,10 @@ async function renderEpisode(n, keep) {
 
   box.innerHTML = `
     <div>
-      <div class="faint">Épisode #${n} ${set.mode === 'quick' ? '· ⚡ rapide' : ''} ${set.quality === 'max' ? '· ✨ qualité max' : ''}</div>
+      <div class="faint">Épisode #${n} ${modeTag(set.mode) ? `· ${modeTag(set.mode)}` : ''} ${set.quality === 'max' ? '· ✨ qualité max' : ''}</div>
       <h1 style="font-size:27px;margin-top:4px">${esc(issue.title)}</h1>
       <div class="row" style="margin-top:10px;flex-wrap:wrap">${chip(sit.lab, sit.lab === 'script-pret' && stg ? `${stg.emoji} ${stg.title}` : '')}</div>
-      ${set.mode === 'guided' ? `<div class="stepper">${Array.from({ length: guidedSteps }, (_, i) => `<div class="${i + 1 < stepNow ? 'done' : i + 1 === stepNow ? 'now' : ''}"></div>`).join('')}</div>` : ''}
+      ${set.mode !== 'quick' ? `<div class="stepper">${Array.from({ length: guidedSteps }, (_, i) => `<div class="${i + 1 < stepNow ? 'done' : i + 1 === stepNow ? 'now' : ''}"></div>`).join('')}</div>` : ''}
     </div>
     ${body}${history}`;
 
@@ -768,7 +782,7 @@ function stageView(sit, set, drafts) {
   return '';
 }
 
-function doneView(sit, comments, drafts) {
+function doneView(sit, comments, drafts, set) {
   const videoC = [...comments].reverse().find((c) => isBot(c) && /^✅/.test(c.body.trim()));
   const link = videoC && (videoC.body.match(/\]\((https?:[^)]+)\)/) || [])[1];
   return `
@@ -777,7 +791,10 @@ function doneView(sit, comments, drafts) {
       ${videoC ? `<div class="md faint">${md(videoC.body.replace(/^✅[^\n]*\n?/, ''))}</div>` : ''}</div>
     <div class="card stack"><h3>✨ Améliorer l’animation</h3><p class="faint">Écris ce qui est faible (un moment, une scène). La voix est réutilisée : pas de crédits ElevenLabs.</p>
       <textarea id="improve" data-keep="improve" rows="3" placeholder="Ex. : 0:30 plus de mouvement, la scène du métro plus vivante">${esc(drafts.improve || '')}</textarea>
-      <button class="btn small" id="sendImprove">✨ Améliorer et refaire la vidéo</button></div>`;
+      <button class="btn small" id="sendImprove">✨ Améliorer et refaire la vidéo</button></div>
+    ${set.mode === 'story' ? `<div class="card stack"><h3>📖 Partie suivante</h3><p class="faint">Claude met à jour la bible de la série, puis propose 3 ouvertures qui reprennent le cliffhanger.</p>
+      <textarea id="next" data-keep="next" rows="2" placeholder="Une envie pour la suite ? (facultatif)">${esc(drafts.next || '')}</textarea>
+      <button class="btn green small" id="sendNext">📖 Écrire la partie suivante</button></div>` : ''}`;
 }
 
 // ---------- the actions ----------
@@ -839,7 +856,7 @@ function wire(n, sit, set) {
   if ($('okScript')) {
     $('okScript').onclick = () => {
       if (set.mode === 'quick') {
-        if (!confirmCredits('Lancer la vidéo ?')) return;
+        if (!confirmCredits('Lancer la vidéo ?', set.mode === 'story')) return;
         return post('ok', 'Vidéo lancée 🎬');
       }
       post('/script ok', 'Claude propose 3 fins');
@@ -893,7 +910,7 @@ function wire(n, sit, set) {
     };
     $('okBoard').onclick = () => {
       if (lines()) return toast('Envoie d’abord tes notes, ou efface-les.');
-      if (!confirmCredits('Valider le storyboard ? La voix et le son vont être générés, puis un brouillon vidéo.')) return;
+      if (!confirmCredits('Valider le storyboard ? La voix et le son vont être générés, puis un brouillon vidéo.', set.mode === 'story')) return;
       post('/board ok', 'Storyboard validé : la voix et le brouillon arrivent 🎙️');
     };
   }
@@ -918,6 +935,11 @@ function wire(n, sit, set) {
       post('/draft ok', 'Rendu final lancé 🎬');
     };
   }
+  // story mode: the next part, on this same issue
+  if ($('sendNext')) $('sendNext').onclick = () => {
+    const v = $('next').value.trim();
+    post(`/next${v ? `: ${v}` : ''}`, 'Claude prépare la partie suivante 📖');
+  };
   // improve
   if ($('sendImprove')) $('sendImprove').onclick = () => {
     const v = $('improve').value.trim();
