@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Et si…</title>
-<meta name="description" content="Tes épisodes What If : hook, script, fin, storyboard, brouillon, vidéo.">
+<meta name="description" content="Tes épisodes What If : hook, script, fin, storyboard, vidéo.">
 <meta name="theme-color" content="#140F22">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -194,8 +194,8 @@ const STAGE = {
   script: { title: 'Valide le script', emoji: '📜', step: 3 },
   ending: { title: 'Choisis la fin', emoji: '🎭', step: 4 },
   board: { title: 'Regarde le storyboard', emoji: '🎞️', step: 5 },
-  draft: { title: 'Regarde le brouillon', emoji: '🎬', step: 6 },
-  done: { title: 'Ta vidéo est prête', emoji: '✅', step: 7 },
+  draft: { title: 'Regarde le brouillon', emoji: '🎬', step: 6 }, // only episodes made when there was a draft step
+  done: { title: 'Ta vidéo est prête', emoji: '✅', step: 6 },
 };
 
 // ---------- helpers ----------
@@ -237,7 +237,7 @@ const chip = (key, text) => {
 };
 const confirmCredits = (what, story) => confirm(`${what}\n\nÇa utilise environ ${story ? '1 500' : '1 000'} crédits ElevenLabs (la voix${story ? ' de tous les personnages' : ''}).`);
 const MODES = {
-  guided: { label: 'Guidé', hint: 'Une étape à la fois : hooks, plan, script, fins, storyboard, brouillon', create: '✍️ Proposer 3 hooks', toast: 'C’est parti : Claude écrit 3 hooks' },
+  guided: { label: 'Guidé', hint: 'Une étape à la fois : hooks, plan, script, fins, storyboard, vidéo', create: '✍️ Proposer 3 hooks', toast: 'C’est parti : Claude écrit 3 hooks' },
   quick: { label: '⚡ Rapide', hint: 'Sujet → script → ok → vidéo, sans les étapes', create: '✍️ Écrire le script', toast: 'C’est parti : Claude écrit le script' },
   story: { label: '📖 Histoire', hint: 'Une série : un héros, des personnages qui parlent, des parties de 3 à 4 min', create: '✍️ Proposer 3 ouvertures', toast: 'C’est parti : Claude écrit 3 ouvertures' },
 };
@@ -407,7 +407,7 @@ function viewSetup() {
   shell(`
     <div class="stack">
       <h1>Tes épisodes <span class="accent">What If</span>, depuis ton téléphone.</h1>
-      <p class="dim">Tu choisis le hook, le plan, la fin, tu commentes le storyboard et le brouillon, la vidéo arrive. Pour ça, l’app a besoin d’un jeton GitHub, une seule fois. Il reste sur ce téléphone.</p>
+      <p class="dim">Tu choisis le hook, le plan, la fin, tu commentes le storyboard, la vidéo arrive. Pour ça, l’app a besoin d’un jeton GitHub, une seule fois. Il reste sur ce téléphone.</p>
       <div class="card">
         <h2>Créer le jeton</h2>
         <ol class="steps">
@@ -672,7 +672,7 @@ function estimate(lastMine, lab) {
     if (/^\/(ending \d|board)/.test(c)) return { min: 25, text: 'Claude dessine le storyboard plan par plan. Gratuit : pas encore de voix.' };
     return { min: 6, text: 'Claude écrit et vérifie les chiffres.' };
   }
-  if (/^\/board ok/.test(c)) return { min: 25, text: 'La voix, le son, puis un brouillon vidéo en 540p.' };
+  if (/^\/board ok/.test(c)) return { min: 45, text: 'La voix, le son, puis la vidéo finale sur 6 machines en parallèle.' };
   if (/^\/draft ok/.test(c)) return { min: 20, text: 'Le rendu final, sur 6 machines en parallèle.' };
   if (/^\/draft/.test(c)) return { min: 25, text: 'Claude corrige d’après tes notes, puis un nouveau brouillon.' };
   if (/^\/improve/.test(c)) return { min: 40, text: 'Claude améliore l’animation, puis un nouveau rendu final.' };
@@ -693,7 +693,7 @@ async function renderEpisode(n, keep) {
   const sit = situation(issue, comments);
   const st = STATUS[sit.lab];
   const stg = sit.stage && STAGE[sit.stage];
-  const guidedSteps = 7;
+  const guidedSteps = 6;
   const stepNow = stg ? stg.step : 0;
   const drafts = keep ? Object.fromEntries([...document.querySelectorAll('textarea[data-keep]')].map((t) => [t.dataset.keep, t.value])) : {};
 
@@ -910,8 +910,8 @@ function wire(n, sit, set) {
     };
     $('okBoard').onclick = () => {
       if (lines()) return toast('Envoie d’abord tes notes, ou efface-les.');
-      if (!confirmCredits('Valider le storyboard ? La voix et le son vont être générés, puis un brouillon vidéo.', set.mode === 'story')) return;
-      post('/board ok', 'Storyboard validé : la voix et le brouillon arrivent 🎙️');
+      if (!confirmCredits('Valider le storyboard ? La voix et le son vont être générés, puis la vidéo finale.', set.mode === 'story')) return;
+      post('/board ok', 'Storyboard validé : la voix, puis la vidéo finale 🎬');
     };
   }
   // draft
