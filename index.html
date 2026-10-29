@@ -163,7 +163,7 @@ const $app = document.getElementById('app');
 const STATUS = {
   'script-en-cours': { label: 'Écriture du script', emoji: '✍️', color: 'var(--gold)', live: true, minutes: 10 },
   'script-pret': { label: 'Script à valider', emoji: '📜', color: 'var(--cyan)', live: false },
-  'video-en-cours': { label: 'Vidéo en fabrication', emoji: '🎬', color: 'var(--orange)', live: true, minutes: 90 },
+  'video-en-cours': { label: 'Vidéo en fabrication', emoji: '🎬', color: 'var(--orange)', live: true, minutes: 45 },
   'video-prete': { label: 'Vidéo prête', emoji: '✅', color: 'var(--green)', live: false },
   echec: { label: 'Échec, à relancer', emoji: '⚠️', color: 'var(--red)', live: false },
   nouveau: { label: 'Démarrage…', emoji: '⏳', color: 'var(--gold)', live: true, minutes: 10 },
@@ -481,9 +481,9 @@ async function renderEpisode(n, keepDraft) {
 
   const live = st.live
     ? `<div class="card">
-        <div class="row spread"><b>${st.emoji} ${st.label}</b><span class="faint">${s === 'video-en-cours' ? 'env. 1 h 30' : 'env. 5 à 15 min'}</span></div>
+        <div class="row spread"><b>${st.emoji} ${st.label}</b><span class="faint">${s === 'video-en-cours' ? 'env. 45 min' : 'env. 5 à 15 min'}</span></div>
         <div class="progress"><div style="width:${Math.max(4, pct)}%"></div></div>
-        <p class="faint" style="margin-top:10px">${s === 'video-en-cours' ? 'Voix, plans, auto-contrôle, son, rendu. Tu peux fermer l’app : le statut se met à jour tout seul.' : 'Claude vérifie les chiffres et écrit le script. Tu peux fermer l’app.'}</p>
+        <p class="faint" style="margin-top:10px">${s === 'video-en-cours' ? 'Voix, plans, auto-contrôle, son, puis rendu sur 6 machines en parallèle. Tu peux fermer l’app : le statut se met à jour tout seul.' : 'Claude vérifie les chiffres et écrit le script. Tu peux fermer l’app.'}</p>
       </div>`
     : '';
 
