@@ -196,6 +196,19 @@ const chip = (key) => {
   return `<span class="chip ${s.live ? 'live' : ''}" style="color:${s.color};background:color-mix(in srgb, ${s.color} 14%, transparent)"><span class="dot"></span>${s.label}</span>`;
 };
 const isBot = (c) => c.user && (c.user.type === 'Bot' || /\[bot\]$/.test(c.user.login));
+const OK_RE = /^(ok|okay|ok go|oui|go|valide|validé|c.est bon)[.!?]*$/i;
+// When an episode has no status label (a pipeline hiccup), read where it stands from the conversation itself.
+const statusFromComments = (cs) => {
+  const last = cs[cs.length - 1];
+  if (!last) return 'nouveau';
+  if (!isBot(last)) return OK_RE.test(last.body.trim()) ? 'video-en-cours' : 'script-en-cours';
+  const b = last.body.trim();
+  if (/^✅/.test(b)) return 'video-prete';
+  if (/^⚠️/.test(b)) return 'echec';
+  if (/^🎬/.test(b)) return 'video-en-cours';
+  if (/Réponds \*\*ok\*\*/i.test(b)) return 'script-pret';
+  return 'nouveau';
+};
 
 // ---------- GitHub ----------
 async function gh(path, opts = {}) {
@@ -442,7 +455,8 @@ async function renderEpisode(n, keepDraft) {
     if (e.message !== '401') box.innerHTML = `<div class="card faint">Épisode introuvable.</div>`;
     return;
   }
-  const s = statusOf(issue);
+  let s = statusOf(issue);
+  if (s === 'nouveau' && comments.length) s = statusFromComments(comments);
   const st = STATUS[s];
   const bot = comments.filter(isBot);
   const scriptC = [...bot].reverse().find((c) => /Réponds \*\*ok\*\*/i.test(c.body) || /^#\s/m.test(c.body));
@@ -489,12 +503,15 @@ async function renderEpisode(n, keepDraft) {
     ? `<details class="card history"><summary>Tes demandes (${mine.length}) ›</summary>${mine.map((c) => `<div class="msg me"><div class="faint">${ago(c.created_at)}</div>${esc(c.body)}</div>`).join('')}</details>`
     : '';
 
-  const actions = s === 'script-pret'
+  const canReply = !st.live && s !== 'video-prete' && s !== 'echec';
+  const actions = canReply
     ? `<div class="sticky-actions stack">
-        <div id="changeBox" class="${draft ? '' : 'hidden'}"><textarea id="change" rows="3" placeholder="Qu’est-ce que tu veux changer ? (ton, fin, un chiffre, un jour…)">${esc(draft)}</textarea>
-          <div style="margin-top:10px"><button class="btn small" id="sendChange">Envoyer la modif</button></div></div>
-        <button class="btn green" id="approve">✅ Valider et lancer la vidéo</button>
-        <button class="btn ghost" id="toggleChange">✏️ Demander une modif</button>
+        ${scriptC ? '<button class="btn green" id="approve">✅ Valider et lancer la vidéo</button>' : ''}
+        <div class="card" style="padding:14px">
+          <label class="faint" for="change">${scriptC ? 'Ou écris ce que tu veux changer' : 'Ton message à Claude'}</label>
+          <textarea id="change" rows="3" placeholder="Ex. : plus drôle au jour 2, change la fin, un autre chiffre…">${esc(draft)}</textarea>
+          <div style="margin-top:10px"><button class="btn ghost small" id="sendChange">✏️ Envoyer</button></div>
+        </div>
        </div>`
     : '';
 
@@ -515,11 +532,13 @@ async function renderEpisode(n, keepDraft) {
     if (!confirm('Lancer la vidéo ? Ça utilise environ 1 000 crédits ElevenLabs.')) return;
     post('ok', 'Vidéo lancée 🎬');
   };
-  if ($('toggleChange')) $('toggleChange').onclick = () => { $('changeBox').classList.toggle('hidden'); $('change').focus(); };
   if ($('sendChange')) $('sendChange').onclick = () => {
     const v = $('change').value.trim();
     if (!v) return toast('Écris ce que tu veux changer.');
-    if (/^(ok|okay|oui|go|valide|validé|c.est bon)[.!?]*$/i.test(v)) return toast('Pour valider, utilise le bouton vert.');
+    if (OK_RE.test(v)) {
+      if (!confirm('Lancer la vidéo ? Ça utilise environ 1 000 crédits ElevenLabs.')) return;
+      return post('ok', 'Vidéo lancée 🎬');
+    }
     post(v, 'Modif envoyée : Claude réécrit le script');
   };
   if ($('retry')) $('retry').onclick = () => post(scriptC ? 'ok' : 'Réessaie d’écrire le script, s’il te plaît.', 'Relancé');
