@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Et si…</title>
+<meta name="description" content="Tes épisodes What If : un sujet, un script, une vidéo.">
+<meta name="theme-color" content="#140F22">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Et si…">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Kalam:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<style>
+  :root {
+    --bg: #140F22;
+    --bg2: #1F1734;
+    --card: rgba(255, 255, 255, 0.06);
+    --card-hi: rgba(255, 255, 255, 0.1);
+    --line: rgba(255, 255, 255, 0.1);
+    --text: #F6EFE3;
+    --dim: #B6A9C9;
+    --faint: #7E7296;
+    --orange: #FF8A3D;
+    --gold: #FFE27A;
+    --cyan: #7FD4FF;
+    --green: #5BE08A;
+    --red: #FF5A4A;
+    --radius: 22px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    background-image: radial-gradient(120% 60% at 50% -10%, #5A2E5E 0%, rgba(90, 46, 94, 0) 60%),
+      radial-gradient(90% 40% at 80% 0%, rgba(255, 138, 61, 0.28) 0%, rgba(255, 138, 61, 0) 70%);
+    background-attachment: fixed;
+    color: var(--text);
+    font: 16px/1.5 Inter, system-ui, -apple-system, sans-serif;
+    min-height: 100dvh;
+  }
+  .app { max-width: 560px; margin: 0 auto; padding: calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 32px); }
+  h1, h2, .display { font-family: 'Bricolage Grotesque', system-ui, sans-serif; letter-spacing: -0.01em; margin: 0; }
+  h1 { font-size: 34px; font-weight: 800; line-height: 1.05; }
+  h1 .accent { color: var(--orange); }
+  h2 { font-size: 20px; font-weight: 700; }
+  p { margin: 0; }
+  .dim { color: var(--dim); }
+  .faint { color: var(--faint); font-size: 13px; }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .spread { justify-content: space-between; }
+  .stack > * + * { margin-top: 14px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; min-height: 44px; }
+  .iconbtn {
+    width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--line); background: var(--card);
+    color: var(--text); display: grid; place-items: center; font-size: 20px; cursor: pointer;
+  }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; backdrop-filter: blur(10px); }
+  .compose { padding: 20px; background: linear-gradient(160deg, rgba(255, 138, 61, 0.16), rgba(127, 212, 255, 0.06)); }
+  .compose label { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 15px; color: var(--gold); }
+  textarea, input[type=text], input[type=password] {
+    width: 100%; margin-top: 10px; border-radius: 16px; border: 1px solid var(--line); background: rgba(0, 0, 0, 0.28);
+    color: var(--text); font: inherit; font-size: 17px; padding: 14px 16px; outline: none; resize: none;
+  }
+  textarea:focus, input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255, 138, 61, 0.2); }
+  .topic-input { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 20px; min-height: 84px; }
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 54px; border: 0;
+    border-radius: 16px; font: 700 17px 'Bricolage Grotesque', sans-serif; cursor: pointer; color: #1A1230;
+    background: linear-gradient(180deg, #FFA45E, var(--orange)); box-shadow: 0 8px 24px rgba(255, 138, 61, 0.35);
+    transition: transform 0.08s ease;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn[disabled] { opacity: 0.5; box-shadow: none; }
+  .btn.green { background: linear-gradient(180deg, #7BEBA2, var(--green)); box-shadow: 0 8px 24px rgba(91, 224, 138, 0.3); }
+  .btn.ghost { background: var(--card); color: var(--text); border: 1px solid var(--line); box-shadow: none; }
+  .btn.small { min-height: 44px; font-size: 15px; }
+  .list { display: grid; gap: 12px; }
+  .ep { display: flex; gap: 14px; align-items: center; cursor: pointer; }
+  .ep:active { background: var(--card-hi); }
+  .ep .thumb {
+    flex: none; width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; font-size: 24px;
+    background: rgba(0, 0, 0, 0.25); border: 1px solid var(--line);
+  }
+  .ep .title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 17px; line-height: 1.25; }
+  .ep .meta { margin-top: 4px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+  .chip .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .chip.live .dot { animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.25; } }
+  .progress { height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; margin-top: 14px; }
+  .progress > div { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--orange), var(--gold)); transition: width 1s ease; }
+  .script { font-size: 16.5px; }
+  .script h1, .script h2, .script h3 { font-family: 'Bricolage Grotesque', sans-serif; margin: 22px 0 8px; line-height: 1.2; }
+  .script h1 { font-size: 24px; } .script h2 { font-size: 19px; color: var(--gold); } .script h3 { font-size: 16px; color: var(--gold); }
+  .script p { margin: 0 0 12px; }
+  .script strong { color: var(--gold); }
+  .script blockquote { margin: 10px 0; padding: 4px 14px; border-left: 3px solid var(--orange); color: var(--dim); }
+  .script ul, .script ol { padding-left: 22px; margin: 0 0 12px; }
+  .script a { color: var(--cyan); }
+  .script hr { border: 0; border-top: 1px solid var(--line); margin: 18px 0; }
+  .script code { font-size: 14px; background: rgba(0, 0, 0, 0.3); padding: 1px 5px; border-radius: 6px; }
+  .script table { border-collapse: collapse; width: 100%; font-size: 14px; display: block; overflow-x: auto; }
+  .script td, .script th { border: 1px solid var(--line); padding: 6px 8px; }
+  .sticky-actions {
+    position: sticky; bottom: 0; margin: 18px -16px 0; padding: 14px 16px calc(env(safe-area-inset-bottom) + 14px);
+    background: linear-gradient(180deg, rgba(20, 15, 34, 0), var(--bg) 30%);
+  }
+  .bubble {
+    font-family: Kalam, cursive; font-weight: 700; background: var(--text); color: #1D2033; display: inline-block;
+    padding: 6px 16px; border-radius: 999px; font-size: 18px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  }
+  .empty { text-align: center; padding: 34px 20px; }
+  .empty .big { font-size: 44px; }
+  .history .msg { border-left: 2px solid var(--line); padding: 2px 0 2px 12px; margin-top: 10px; }
+  .history .msg.me { border-color: var(--orange); }
+  details summary { cursor: pointer; color: var(--dim); font-weight: 600; list-style: none; }
+  details summary::-webkit-details-marker { display: none; }
+  .video-card video { width: 100%; border-radius: 16px; background: #000; aspect-ratio: 9 / 16; max-height: 70vh; display: block; }
+  .toast {
+    position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 24px); transform: translateX(-50%) translateY(20px);
+    background: #0B0816; border: 1px solid var(--line); padding: 12px 18px; border-radius: 14px; opacity: 0;
+    transition: all 0.25s ease; width: max-content; max-width: 88vw; text-align: center; z-index: 10; font-weight: 500;
+  }
+  .toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .steps { counter-reset: s; padding: 0; margin: 0; list-style: none; }
+  .steps li { counter-increment: s; position: relative; padding-left: 38px; margin-top: 12px; }
+  .steps li::before {
+    content: counter(s); position: absolute; left: 0; top: 0; width: 26px; height: 26px; border-radius: 50%;
+    background: var(--orange); color: #1A1230; font: 700 14px/26px 'Bricolage Grotesque', sans-serif; text-align: center;
+  }
+  .demo-banner { background: rgba(127, 212, 255, 0.12); border: 1px solid rgba(127, 212, 255, 0.3); color: var(--cyan); border-radius: 14px; padding: 10px 14px; font-size: 14px; margin-bottom: 16px; }
+  .spinner { width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid rgba(26, 18, 48, 0.3); border-top-color: #1A1230; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// "Et si…": a phone front-end for the What If studio. It talks to the studio's private GitHub repository with the
+// person's own token (kept in this browser only): a new episode is an issue, a change request or the "ok" is a comment,
+// and the pipeline's status labels say where each episode stands. ?demo shows sample data without any network.
+
+const LS = {
+  get(k, d = '') { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} },
+};
+const DEMO = new URLSearchParams(location.search).has('demo');
+const state = { repo: LS.get('wi_repo', 'mamoune123/what-if-studio'), token: LS.get('wi_token'), timer: null };
+const $app = document.getElementById('app');
+
+const STATUS = {
+  'script-en-cours': { label: 'Écriture du script', emoji: '✍️', color: 'var(--gold)', live: true, minutes: 10 },
+  'script-pret': { label: 'Script à valider', emoji: '📜', color: 'var(--cyan)', live: false },
+  'video-en-cours': { label: 'Vidéo en fabrication', emoji: '🎬', color: 'var(--orange)', live: true, minutes: 90 },
+  'video-prete': { label: 'Vidéo prête', emoji: '✅', color: 'var(--green)', live: false },
+  echec: { label: 'Échec, à relancer', emoji: '⚠️', color: 'var(--red)', live: false },
+  nouveau: { label: 'Démarrage…', emoji: '⏳', color: 'var(--gold)', live: true, minutes: 10 },
+};
+const statusOf = (issue) => {
+  const names = (issue.labels || []).map((l) => (typeof l === 'string' ? l : l.name));
+  return Object.keys(STATUS).find((k) => names.includes(k)) || 'nouveau';
+};
+
+// ---------- small helpers ----------
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const md = (s) => (window.marked && window.DOMPurify ? DOMPurify.sanitize(marked.parse(s || '')) : `<p>${esc(s).replace(/\n/g, '<br>')}</p>`);
+const ago = (iso) => {
+  const m = Math.max(0, Math.round((Date.now() - new Date(iso)) / 60000));
+  if (m < 1) return "à l'instant";
+  if (m < 60) return `il y a ${m} min`;
+  const h = Math.round(m / 60);
+  return h < 24 ? `il y a ${h} h` : `il y a ${Math.round(h / 24)} j`;
+};
+const toast = (msg) => {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => t.classList.remove('on'), 2600);
+};
+const buzz = () => { try { navigator.vibrate && navigator.vibrate(12); } catch {} };
+const chip = (key) => {
+  const s = STATUS[key];
+  return `<span class="chip ${s.live ? 'live' : ''}" style="color:${s.color};background:color-mix(in srgb, ${s.color} 14%, transparent)"><span class="dot"></span>${s.label}</span>`;
+};
+const isBot = (c) => c.user && (c.user.type === 'Bot' || /\[bot\]$/.test(c.user.login));
+
+// ---------- GitHub ----------
+async function gh(path, opts = {}) {
+  if (DEMO) return demoApi(path, opts);
+  const r = await fetch(`https://api.github.com${path}`, {
+    ...opts,
+    headers: {
+      Accept: 'application/vnd.github+json',
+      Authorization: `Bearer ${state.token}`,
+      'X-GitHub-Api-Version': '2022-11-28',
+      ...(opts.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(opts.headers || {}),
+    },
+  });
+  if (r.status === 401) {
+    LS.del('wi_token');
+    state.token = '';
+    toast('Le jeton n’est plus valide : recolle-le.');
+    route('#/setup');
+    throw new Error('401');
+  }
+  if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+  return r.status === 204 ? null : r.json();
+}
+const repoPath = () => `/repos/${state.repo}`;
+
+// ---------- the demo (no network) ----------
+const DEMO_DATA = (() => {
+  const now = Date.now();
+  const iso = (min) => new Date(now - min * 60000).toISOString();
+  const script = `# ET SI TU POUVAIS ARRÊTER LE TEMPS ?\n\n**1. Hook**\nMardi, 17 h 03. Un café qui fume. Un chien qui aboie. Ta cheffe qui ouvre la bouche pour te crier dessus.\nEt d'un coup, tout s'arrête. Sauf toi.\n\n**2. Les questions**\nCombien de temps tu peux tenir ? Qu'est-ce que tu ferais ? Et qu'est-ce que ça coûte ?\n\n**3. Jour 1 — la montée**\nTu finis tes devoirs en zéro seconde. Tu goûtes tous les gâteaux de la pâtisserie…\n\n---\n\n**Mots :** 452 · **durée estimée :** 2 min 26\n\n**Faits et sources**\n- La lumière parcourt 300 000 km par seconde (constante physique).\n\n**Crédits ElevenLabs estimés :** ~1 050\n\nRéponds **ok** pour lancer la vidéo, ou écris ce que tu veux changer.`;
+  const issues = [
+    { number: 7, title: 'Et si tu pouvais arrêter le temps ?', labels: ['script-pret'], updated_at: iso(6), created_at: iso(20), state: 'open' },
+    { number: 6, title: 'Et si tu ne dormais plus jamais ?', labels: ['video-en-cours'], updated_at: iso(34), created_at: iso(120), state: 'open' },
+    { number: 5, title: 'Et si un jour tu entendais les pensées des gens ?', labels: ['video-prete'], updated_at: iso(60 * 26), created_at: iso(60 * 30), state: 'open' },
+  ];
+  const comments = {
+    7: [
+      { id: 1, user: { login: 'github-actions[bot]', type: 'Bot' }, body: script.replace('arrêter le temps', 'arrêter le temps').replace('Ta cheffe', 'Ton prof'), created_at: iso(15) },
+      { id: 2, user: { login: 'toi', type: 'User' }, body: 'Mets ta cheffe au lieu du prof, et plus drôle au jour 1', created_at: iso(12) },
+      { id: 3, user: { login: 'github-actions[bot]', type: 'Bot' }, body: script, created_at: iso(6) },
+    ],
+    6: [
+      { id: 4, user: { login: 'github-actions[bot]', type: 'Bot' }, body: script.replace('ARRÊTER LE TEMPS', 'NE PLUS JAMAIS DORMIR'), created_at: iso(50) },
+      { id: 5, user: { login: 'toi', type: 'User' }, body: 'ok', created_at: iso(36) },
+      { id: 6, user: { login: 'github-actions[bot]', type: 'Bot' }, body: "🎬 C'est parti : voix, plans, son et rendu. Compte environ 1 h 30.", created_at: iso(34) },
+    ],
+    5: [
+      { id: 7, user: { login: 'github-actions[bot]', type: 'Bot' }, body: script.replace('ARRÊTER LE TEMPS', 'ENTENDRE LES PENSÉES'), created_at: iso(60 * 29) },
+      { id: 8, user: { login: 'toi', type: 'User' }, body: 'ok', created_at: iso(60 * 28) },
+      { id: 9, user: { login: 'github-actions[bot]', type: 'Bot' }, body: '✅ **La vidéo est prête** : [pensees-final.mp4](https://github.com)\n\n2 min 17 · 58 plans · 970 crédits ElevenLabs', created_at: iso(60 * 26) },
+    ],
+  };
+  return { issues, comments };
+})();
+async function demoApi(path, opts) {
+  await new Promise((r) => setTimeout(r, 250));
+  const d = DEMO_DATA;
+  if (/\/issues\?/.test(path)) return d.issues;
+  let m = path.match(/\/issues\/(\d+)\/comments/);
+  if (m && opts.method === 'POST') {
+    const body = JSON.parse(opts.body).body;
+    d.comments[m[1]].push({ id: Date.now(), user: { login: 'toi', type: 'User' }, body, created_at: new Date().toISOString() });
+    const is = d.issues.find((i) => i.number == m[1]);
+    is.labels = [/^(ok|oui|go|valide)$/i.test(body.trim()) ? 'video-en-cours' : 'script-en-cours'];
+    is.updated_at = new Date().toISOString();
+    return {};
+  }
+  if (m) return d.comments[m[1]];
+  m = path.match(/\/issues\/(\d+)$/);
+  if (m && opts.method === 'PATCH') { d.issues = d.issues.filter((i) => i.number != m[1]); return {}; }
+  if (m) return d.issues.find((i) => i.number == m[1]);
+  if (/\/issues$/.test(path) && opts.method === 'POST') {
+    const b = JSON.parse(opts.body);
+    const n = Math.max(...d.issues.map((i) => i.number)) + 1;
+    d.issues.unshift({ number: n, title: b.title, labels: [], updated_at: new Date().toISOString(), created_at: new Date().toISOString(), state: 'open' });
+    d.comments[n] = [];
+    return { number: n };
+  }
+  if (/\/releases/.test(path)) return [];
+  if (/\/user$/.test(path)) return { login: 'toi' };
+  return {};
+}
+
+// ---------- router ----------
+function route(hash) {
+  if (hash && location.hash !== hash) { location.hash = hash; return; }
+  clearInterval(state.timer);
+  const h = location.hash || '#/';
+  if (!DEMO && !state.token) return viewSetup();
+  if (h === '#/setup') return viewSetup();
+  if (h === '#/settings') return viewSettings();
+  const m = h.match(/^#\/ep\/(\d+)/);
+  if (m) return viewEpisode(+m[1]);
+  return viewHome();
+}
+window.addEventListener('hashchange', () => route());
+
+// ---------- views ----------
+function shell(inner, { back = false, settings = true } = {}) {
+  $app.innerHTML = `
+    ${DEMO ? '<div class="demo-banner">Mode démo : rien n’est envoyé à GitHub. <a href="./" style="color:inherit">Quitter</a></div>' : ''}
+    <div class="topbar">
+      ${back ? '<button class="iconbtn" onclick="history.length > 1 ? history.back() : route(\'#/\')" aria-label="Retour">‹</button>' : '<div class="display" style="font-weight:800;font-size:20px">Et si<span style="color:var(--orange)">…</span></div>'}
+      ${settings ? '<button class="iconbtn" onclick="route(\'#/settings\')" aria-label="Réglages">⚙︎</button>' : '<span></span>'}
+    </div>
+    ${inner}`;
+}
+
+function viewSetup() {
+  shell(`
+    <div class="stack">
+      <h1>Tes épisodes <span class="accent">What If</span>, depuis ton téléphone.</h1>
+      <p class="dim">Tu tapes un sujet, Claude écrit le script, tu valides, la vidéo arrive. Pour ça, l’app a besoin d’un jeton GitHub, une seule fois. Il reste sur ce téléphone.</p>
+      <div class="card">
+        <h2>Créer le jeton</h2>
+        <ol class="steps">
+          <li>Ouvre <a style="color:var(--cyan)" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com → nouveau jeton fin</a>.</li>
+          <li>Nom : <b>Et si app</b>. Expiration : 1 an.</li>
+          <li>Accès : <b>Only select repositories</b> → <b>${esc(state.repo.split('/')[1])}</b>.</li>
+          <li>Permissions : <b>Issues : Read and write</b>, <b>Contents : Read-only</b>.</li>
+          <li>Génère, copie, colle ici.</li>
+        </ol>
+      </div>
+      <input id="tok" type="password" placeholder="github_pat_…" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <button class="btn" id="go">C’est parti</button>
+      <a class="btn ghost small" href="?demo" style="text-decoration:none">Voir la démo d’abord</a>
+    </div>`, { settings: false });
+  document.getElementById('go').onclick = async () => {
+    const v = document.getElementById('tok').value.trim();
+    if (!v) return toast('Colle ton jeton d’abord.');
+    state.token = v;
+    try {
+      await gh(`${repoPath()}`);
+      LS.set('wi_token', v);
+      buzz();
+      toast('Connecté ✨');
+      route('#/');
+    } catch (e) {
+      state.token = '';
+      toast(e.message === '401' ? 'Jeton refusé.' : 'Le dépôt est introuvable avec ce jeton : vérifie l’accès au dépôt.');
+    }
+  };
+}
+
+function viewSettings() {
+  shell(`
+    <div class="stack">
+      <h1>Réglages</h1>
+      <div class="card stack">
+        <div><div class="faint">Dépôt du studio</div><input id="repo" type="text" value="${esc(state.repo)}" autocapitalize="off" spellcheck="false"></div>
+        <button class="btn small" id="save">Enregistrer</button>
+      </div>
+      <div class="card stack">
+        <p class="dim">Le jeton GitHub est enregistré sur ce téléphone uniquement.</p>
+        <button class="btn ghost small" id="forget">Oublier le jeton</button>
+      </div>
+      <p class="faint">Les crédits ElevenLabs ne sont dépensés qu’après ton « Valider et lancer ».</p>
+    </div>`, { back: true, settings: false });
+  document.getElementById('save').onclick = () => {
+    state.repo = document.getElementById('repo').value.trim();
+    LS.set('wi_repo', state.repo);
+    toast('Enregistré');
+    route('#/');
+  };
+  document.getElementById('forget').onclick = () => {
+    LS.del('wi_token');
+    state.token = '';
+    route('#/setup');
+  };
+}
+
+async function viewHome() {
+  shell(`
+    <div class="stack">
+      <div class="card compose">
+        <label for="topic">Nouvelle vidéo</label>
+        <textarea id="topic" class="topic-input" rows="2" placeholder="Et si tu pouvais…"></textarea>
+        <textarea id="notes" rows="2" placeholder="Une envie, un angle ? (facultatif)" style="font-size:15px"></textarea>
+        <div style="margin-top:12px"><button class="btn" id="create">✍️ Écrire le script</button></div>
+      </div>
+      <div class="row spread" style="margin-top:26px"><h2>Tes épisodes</h2><button class="iconbtn" id="refresh" aria-label="Rafraîchir">↻</button></div>
+      <div class="list" id="list"><div class="card faint">Chargement…</div></div>
+    </div>`);
+  const topic = document.getElementById('topic');
+  topic.addEventListener('focus', () => { if (!topic.value) topic.value = 'Et si '; });
+  document.getElementById('refresh').onclick = () => loadList(true);
+  document.getElementById('create').onclick = async (e) => {
+    const title = topic.value.trim();
+    if (title.length < 8 || /^et si\s*$/i.test(title)) return toast('Écris ton « Et si… » d’abord.');
+    e.target.disabled = true;
+    e.target.innerHTML = '<span class="spinner"></span> Envoi…';
+    try {
+      const is = await gh(`${repoPath()}/issues`, { method: 'POST', body: JSON.stringify({ title, body: document.getElementById('notes').value.trim() || undefined }) });
+      buzz();
+      toast('C’est parti : Claude écrit le script');
+      route(`#/ep/${is.number}`);
+    } catch (err) {
+      e.target.disabled = false;
+      e.target.textContent = '✍️ Écrire le script';
+      toast('Impossible de créer l’épisode.');
+    }
+  };
+  await loadList();
+  state.timer = setInterval(() => loadList(), 30000);
+}
+
+async function loadList(manual) {
+  const box = document.getElementById('list');
+  if (!box) return;
+  try {
+    const issues = (await gh(`${repoPath()}/issues?state=open&per_page=50&sort=updated`)).filter((i) => !i.pull_request);
+    if (!issues.length) {
+      box.innerHTML = `<div class="card empty"><div class="big">🌆</div><p class="dim" style="margin-top:8px">Pas encore d’épisode. Tape ton premier « Et si… » au-dessus.</p></div>`;
+      return;
+    }
+    box.innerHTML = issues.map((i) => {
+      const s = statusOf(i);
+      return `<div class="card ep" onclick="route('#/ep/${i.number}')">
+        <div class="thumb">${STATUS[s].emoji}</div>
+        <div style="min-width:0;flex:1">
+          <div class="title">${esc(i.title)}</div>
+          <div class="meta row spread">${chip(s)}<span class="faint">${ago(i.updated_at)}</span></div>
+        </div></div>`;
+    }).join('');
+    if (manual) toast('À jour');
+  } catch (e) {
+    if (e.message !== '401') box.innerHTML = `<div class="card faint">Impossible de charger les épisodes (${esc(e.message.slice(0, 60))}).</div>`;
+  }
+}
+
+async function viewEpisode(n) {
+  shell(`<div id="ep" class="stack"><div class="card faint">Chargement…</div></div>`, { back: true });
+  await renderEpisode(n);
+}
+
+async function renderEpisode(n, keepDraft) {
+  const box = document.getElementById('ep');
+  if (!box) return;
+  let issue, comments;
+  try {
+    [issue, comments] = await Promise.all([gh(`${repoPath()}/issues/${n}`), gh(`${repoPath()}/issues/${n}/comments?per_page=100`)]);
+  } catch (e) {
+    if (e.message !== '401') box.innerHTML = `<div class="card faint">Épisode introuvable.</div>`;
+    return;
+  }
+  const s = statusOf(issue);
+  const st = STATUS[s];
+  const bot = comments.filter(isBot);
+  const scriptC = [...bot].reverse().find((c) => /Réponds \*\*ok\*\*/i.test(c.body) || /^#\s/m.test(c.body));
+  const videoC = [...bot].reverse().find((c) => /^✅/.test(c.body.trim()));
+  const versions = bot.filter((c) => /Réponds \*\*ok\*\*/i.test(c.body)).length;
+  const mine = comments.filter((c) => !isBot(c));
+  const draft = keepDraft ? (document.getElementById('change') || {}).value : '';
+  const since = st.live ? new Date((s === 'video-en-cours' ? [...mine].reverse().find((c) => /^(ok|oui|go|valide)/i.test(c.body.trim())) : mine[mine.length - 1])?.created_at || issue.updated_at) : null;
+  const pct = st.live ? Math.min(95, Math.round(((Date.now() - since) / 60000 / st.minutes) * 100)) : 0;
+
+  let video = '';
+  if (s === 'video-prete') {
+    const link = (videoC && (videoC.body.match(/\]\((https?:[^)]+)\)/) || [])[1]) || null;
+    video = `<div class="card video-card stack">
+      <div class="row spread"><h2>🎉 La vidéo est prête</h2></div>
+      <div id="player"></div>
+      ${link ? `<a class="btn green" href="${esc(link)}" target="_blank" rel="noopener" style="text-decoration:none">▶︎ Ouvrir la vidéo</a>` : ''}
+      <button class="btn ghost small" id="inapp">Lire dans l’app</button>
+      ${videoC ? `<div class="script faint">${md(videoC.body.replace(/^✅[^\n]*\n?/, ''))}</div>` : ''}
+    </div>`;
+  }
+
+  const live = st.live
+    ? `<div class="card">
+        <div class="row spread"><b>${st.emoji} ${st.label}</b><span class="faint">${s === 'video-en-cours' ? 'env. 1 h 30' : 'env. 5 à 15 min'}</span></div>
+        <div class="progress"><div style="width:${Math.max(4, pct)}%"></div></div>
+        <p class="faint" style="margin-top:10px">${s === 'video-en-cours' ? 'Voix, plans, auto-contrôle, son, rendu. Tu peux fermer l’app : le statut se met à jour tout seul.' : 'Claude vérifie les chiffres et écrit le script. Tu peux fermer l’app.'}</p>
+      </div>`
+    : '';
+
+  const failed = s === 'echec'
+    ? `<div class="card stack" style="border-color:rgba(255,90,74,.4)"><b>⚠️ Ça a échoué.</b><p class="dim">${scriptC ? 'La voix déjà payée est gardée : relancer ne la refacture pas.' : 'Relance l’écriture du script.'}</p><button class="btn small" id="retry">🔁 Relancer</button></div>`
+    : '';
+
+  const scriptHtml = scriptC ? md(scriptC.body.replace(/\n*Réponds \*\*ok\*\*[^\n]*$/i, '')) : '';
+  const scriptBlock = !scriptC
+    ? (st.live ? '' : '<div class="card faint">Pas encore de script.</div>')
+    : s === 'video-prete' || s === 'video-en-cours'
+      ? `<details class="card"><summary>📜 Voir le script validé ›</summary><div class="script" style="margin-top:12px">${scriptHtml}</div></details>`
+      : `<div class="card script">${scriptHtml}</div>
+         ${versions > 1 ? `<p class="faint" style="text-align:center">Version ${versions} du script</p>` : ''}`;
+
+  const history = mine.length
+    ? `<details class="card history"><summary>Tes demandes (${mine.length}) ›</summary>${mine.map((c) => `<div class="msg me"><div class="faint">${ago(c.created_at)}</div>${esc(c.body)}</div>`).join('')}</details>`
+    : '';
+
+  const actions = s === 'script-pret'
+    ? `<div class="sticky-actions stack">
+        <div id="changeBox" class="${draft ? '' : 'hidden'}"><textarea id="change" rows="3" placeholder="Qu’est-ce que tu veux changer ? (ton, fin, un chiffre, un jour…)">${esc(draft)}</textarea>
+          <div style="margin-top:10px"><button class="btn small" id="sendChange">Envoyer la modif</button></div></div>
+        <button class="btn green" id="approve">✅ Valider et lancer la vidéo</button>
+        <button class="btn ghost" id="toggleChange">✏️ Demander une modif</button>
+       </div>`
+    : '';
+
+  box.innerHTML = `
+    <div><div class="faint">Épisode #${n}</div><h1 style="font-size:28px;margin-top:4px">${esc(issue.title)}</h1><div style="margin-top:10px">${chip(s)}</div></div>
+    ${video}${live}${failed}${scriptBlock}${history}${actions}`;
+
+  const post = async (body, okMsg) => {
+    try {
+      await gh(`${repoPath()}/issues/${n}/comments`, { method: 'POST', body: JSON.stringify({ body }) });
+      buzz();
+      toast(okMsg);
+      setTimeout(() => renderEpisode(n), 900);
+    } catch { toast('Envoi impossible, réessaie.'); }
+  };
+  const $ = (id) => document.getElementById(id);
+  if ($('approve')) $('approve').onclick = () => {
+    if (!confirm('Lancer la vidéo ? Ça utilise environ 1 000 crédits ElevenLabs.')) return;
+    post('ok', 'Vidéo lancée 🎬');
+  };
+  if ($('toggleChange')) $('toggleChange').onclick = () => { $('changeBox').classList.toggle('hidden'); $('change').focus(); };
+  if ($('sendChange')) $('sendChange').onclick = () => {
+    const v = $('change').value.trim();
+    if (!v) return toast('Écris ce que tu veux changer.');
+    if (/^(ok|okay|oui|go|valide|validé|c.est bon)[.!?]*$/i.test(v)) return toast('Pour valider, utilise le bouton vert.');
+    post(v, 'Modif envoyée : Claude réécrit le script');
+  };
+  if ($('retry')) $('retry').onclick = () => post(scriptC ? 'ok' : 'Réessaie d’écrire le script, s’il te plaît.', 'Relancé');
+  if ($('inapp')) $('inapp').onclick = () => playInApp(n);
+  clearInterval(state.timer);
+  if (st.live) state.timer = setInterval(() => renderEpisode(n, true), 20000);
+}
+
+// The video is a release asset of the private studio: fetch it with the token, play it from a blob.
+async function playInApp(n) {
+  const btn = document.getElementById('inapp');
+  const player = document.getElementById('player');
+  if (DEMO) return toast('En démo, il n’y a pas de vraie vidéo.');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Téléchargement…';
+  try {
+    const rel = (await gh(`${repoPath()}/releases?per_page=50`)).find((r) => r.tag_name.startsWith(`episode-${n}-`));
+    const asset = rel && rel.assets.find((a) => /\.mp4$/.test(a.name));
+    if (!asset) throw new Error('no asset');
+    const r = await fetch(`https://api.github.com${repoPath()}/releases/assets/${asset.id}`, { headers: { Authorization: `Bearer ${state.token}`, Accept: 'application/octet-stream' } });
+    if (!r.ok) throw new Error(String(r.status));
+    const url = URL.createObjectURL(await r.blob());
+    player.innerHTML = `<video src="${url}" controls playsinline></video>`;
+    btn.classList.add('hidden');
+  } catch {
+    btn.disabled = false;
+    btn.textContent = 'Lire dans l’app';
+    toast('Lecture dans l’app impossible ici : utilise « Ouvrir la vidéo ».');
+  }
+}
+
+if ('serviceWorker' in navigator && !DEMO) navigator.serviceWorker.register('sw.js').catch(() => {});
+route();
+</script>
+</body>
+</html>
