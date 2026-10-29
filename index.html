@@ -148,6 +148,14 @@
   .stepper { display: flex; gap: 5px; margin-top: 12px; }
   .stepper div { flex: 1; height: 5px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); }
   .stepper div.done { background: var(--orange); } .stepper div.now { background: var(--gold); }
+  .tabs { display: flex; gap: 6px; background: rgba(0, 0, 0, 0.28); border: 1px solid var(--line); border-radius: 16px; padding: 5px; margin: -8px 0 18px; }
+  .tabs a { flex: 1; text-align: center; padding: 10px 6px; border-radius: 12px; font: 700 15px 'Bricolage Grotesque', sans-serif; color: var(--dim); text-decoration: none; }
+  .tabs a.on { background: var(--text); color: #1A1230; }
+  .idea h3 { font-size: 19px; line-height: 1.25; margin-top: 8px; }
+  .idea .pitch { margin-top: 8px; font-size: 16px; }
+  .idea .angle { margin-top: 8px; color: var(--dim); font-size: 14.5px; }
+  .idea .fact { margin-top: 8px; color: var(--faint); font-size: 13.5px; }
+  .idea .btn { margin-top: 14px; }
   .hidden { display: none !important; }
 </style>
 </head>
@@ -297,7 +305,14 @@ const DEMO_DATA = (() => {
   const script = `# Et si tu pouvais arrêter le temps ?\n\n**Le hook**\nMardi, 7 h 02. Ton café qui coule. Ton chat qui miaule…\n\n**Jour 1**\nHuit heures de sommeil. En zéro seconde.\n\n**Jour 2**\nTon exposé de 20 pages, fini pendant que ta prof a la bouche ouverte.\n\n---\n**Mots :** 461 · **durée estimée :** 2 min 29 · **crédits estimés :** ~1 050\n\nValide le script ou écris ce que tu veux changer.`;
   const shotNotes = ['La cuisine à 7 h, le café qui coule', 'Gros plan : l’horloge arrêtée', 'Pip regarde son chat figé en plein saut', 'La rue figée, un pigeon suspendu', 'Titre : ET SI TU POUVAIS ARRÊTER LE TEMPS ?', 'Jour 1 : Pip dort dans son lit', 'La prof figée, bouche ouverte', 'Insert : l’exposé de 20 pages', 'Le vase qui tombe, figé en l’air', 'Pip rattrape le vase, la grand-mère figée', 'Schéma : molécules d’air immobiles', 'Pip pousse contre l’air comme un mur'];
   const shots = shotNotes.map((n, i) => ({ id: `S${i + 1}`, size: ['wide', 'insert', 'medium', 'wide', 'title', 'medium', 'close-up', 'insert', 'medium', 'two-shot', 'schematic', 'medium'][i], note: n }));
+  const ideas = [
+    { id: 1, title: 'Et si tu pouvais rembobiner ta journée ?', pitch: 'Chaque soir, tu peux revivre ta journée en sachant tout ce qui va arriver.', angle: 'Le même lundi, vécu deux fois, mot pour mot.', fact: 'Le cerveau oublie environ 70 % d’une information nouvelle en 24 h (courbe de l’oubli d’Ebbinghaus).', tag: 'temps' },
+    { id: 2, title: 'Et si tu sentais l’odeur des mensonges ?', pitch: 'Chaque mensonge a une odeur. Tu découvres qui te ment, tous les jours.', angle: 'Ton patron entre dans la pièce. Ça sent le brûlé.', fact: 'On dit en moyenne 1 à 2 mensonges par jour (DePaulo, 1996).', tag: 'sens' },
+    { id: 3, title: 'Et si tu gagnais 1 € par pas ?', pitch: 'Chaque pas te rapporte un euro. Marcher devient ton métier.', angle: '8 h 00 : tu as déjà 600 € avant le café.', fact: 'Un adulte fait en moyenne 5 000 à 7 000 pas par jour.', tag: 'argent' },
+    { id: 4, title: 'Et si la gravité baissait de moitié ?', pitch: 'Un matin, tout pèse deux fois moins. Tu sautes au-dessus des voitures.', angle: 'Ton café flotte hors de la tasse.', fact: 'Sur la Lune, la gravité est 6 fois plus faible que sur Terre.', tag: 'espace' },
+  ];
   const issues = [
+    { number: 20, title: '💡 Inspiration', labels: ['script-pret'], updated_at: iso(5), created_at: iso(500), body: '<!-- whatif-inspiration -->' },
     { number: 16, title: 'Et si tu pouvais lire dans les rêves ?', labels: ['script-pret'], updated_at: iso(2), created_at: iso(300), body: '<!-- whatif-settings {"mode":"guided","quality":"standard"} -->' },
     { number: 15, title: 'Et si tu étais la personne la plus chanceuse du monde ?', labels: ['script-pret'], updated_at: iso(4), created_at: iso(40), body: '<!-- whatif-settings {"mode":"guided","quality":"standard"} -->' },
     { number: 14, title: 'Et si tu pouvais arrêter le temps ?', labels: ['script-pret'], updated_at: iso(3), created_at: iso(30), body: '<!-- whatif-settings {"mode":"guided","quality":"max"} -->' },
@@ -308,6 +323,7 @@ const DEMO_DATA = (() => {
     { number: 9, title: 'Et si un jour tu entendais les pensées des gens ?', labels: ['video-prete'], updated_at: iso(60 * 26), created_at: iso(60 * 30), body: '' },
   ];
   const comments = {
+    20: [bot(5, `## 💡 8 idées\n\n<!-- whatif ${JSON.stringify({ stage: 'ideas', options: ideas })} -->`)],
     16: [me(60, '/board ok'), bot(2, `## 🎬 Le brouillon est prêt (2 min 24)\n\n<!-- whatif ${JSON.stringify({ stage: 'draft', ref: 'media/episode-16', path: 'draft/draft.mp4', v: '1', seconds: 144 })} -->`)],
     15: [me(20, '/hook 3'), bot(4, `## 🧭 Le plan de l'histoire\n\n<!-- whatif ${JSON.stringify({ stage: 'outline', options: beats })} -->`)],
     14: [bot(28, `## 🪝 3 hooks pour ton épisode\n\n${hooks.map((h) => `**${h.id}. ${h.title}**\n${h.text}`).join('\n\n')}\n\n<!-- whatif ${JSON.stringify({ stage: 'hooks', options: hooks })} -->`)],
@@ -356,10 +372,12 @@ async function demoApi(path, opts) {
 function route(hash) {
   if (hash && location.hash !== hash) { location.hash = hash; return; }
   clearInterval(state.timer);
+  window.scrollTo(0, 0);
   const h = location.hash || '#/';
   if (!DEMO && !state.token) return viewSetup();
   if (h === '#/setup') return viewSetup();
   if (h === '#/settings') return viewSettings();
+  if (h === '#/ideas') return viewIdeas();
   const m = h.match(/^#\/ep\/(\d+)/);
   if (m) return viewEpisode(+m[1]);
   return viewHome();
@@ -440,12 +458,15 @@ function viewSettings() {
 async function viewHome() {
   const quick = LS.get('wi_quick') === '1';
   const quality = LS.get('wi_quality', 'standard');
+  const pre = state.prefill || {};
+  state.prefill = null;
   shell(`
+    ${tabs('home')}
     <div class="stack">
       <div class="card compose stack">
         <div class="label">Nouvelle vidéo</div>
-        <textarea id="topic" class="topic-input" rows="2" placeholder="Et si tu pouvais…" style="margin-top:6px"></textarea>
-        <textarea id="notes" rows="2" placeholder="Une envie, un angle ? (facultatif)" style="font-size:15px"></textarea>
+        <textarea id="topic" class="topic-input" rows="2" placeholder="Et si tu pouvais…" style="margin-top:6px">${esc(pre.title || '')}</textarea>
+        <textarea id="notes" rows="2" placeholder="Une envie, un angle ? (facultatif)" style="font-size:15px">${esc(pre.notes || '')}</textarea>
         <label class="switch"><div><b>⚡ Mode rapide</b><div class="faint">Sujet → script → ok → vidéo, sans les étapes</div></div><input type="checkbox" id="quick" ${quick ? 'checked' : ''}><span class="knob"></span></label>
         <div><div class="faint" style="margin-bottom:6px">Qualité de l’animation</div>
           <div class="seg" id="quality"><button data-q="standard" class="${quality === 'standard' ? 'on' : ''}">Standard · rapide</button><button data-q="max" class="${quality === 'max' ? 'on' : ''}">Max · plus soignée</button></div></div>
@@ -492,7 +513,7 @@ async function loadList(manual) {
   const box = document.getElementById('list');
   if (!box) return;
   try {
-    const issues = (await gh(`${repoPath()}/issues?state=open&per_page=50&sort=updated`)).filter((i) => !i.pull_request);
+    const issues = (await gh(`${repoPath()}/issues?state=open&per_page=50&sort=updated`)).filter((i) => !i.pull_request && !isInspiration(i));
     if (!issues.length) {
       box.innerHTML = '<div class="card empty"><div class="big">🌆</div><p class="dim" style="margin-top:8px">Pas encore d’épisode. Tape ton premier « Et si… » au-dessus.</p></div>';
       return;
@@ -511,6 +532,94 @@ async function loadList(manual) {
   } catch (e) {
     if (e.message !== '401') box.innerHTML = `<div class="card faint">Impossible de charger les épisodes (${esc(e.message.slice(0, 60))}).</div>`;
   }
+}
+
+// ---------- tabs and the Inspiration tab ----------
+const isInspiration = (i) => /<!--\s*whatif-inspiration\s*-->/.test(i.body || '');
+const tabs = (on) => `<nav class="tabs"><a href="#/" class="${on === 'home' ? 'on' : ''}">🎬 Épisodes</a><a href="#/ideas" class="${on === 'ideas' ? 'on' : ''}">💡 Inspiration</a></nav>`;
+const TAGS = { sens: '👁️ Sens', temps: '⏳ Temps', corps: '💪 Corps', monde: '🌍 Monde', argent: '💰 Argent', nature: '🌿 Nature', espace: '🚀 Espace', pouvoir: '⚡ Pouvoir' };
+
+async function viewIdeas() {
+  shell(`${tabs('ideas')}<div id="ideas" class="stack"><div class="card faint">Chargement…</div></div>`);
+  await renderIdeas();
+}
+
+async function renderIdeas(keep) {
+  const box = document.getElementById('ideas');
+  if (!box) return;
+  const guide = keep ? (document.getElementById('guide') || {}).value || '' : '';
+  let issue = null, comments = [];
+  try {
+    issue = (await gh(`${repoPath()}/issues?state=open&per_page=100`)).find(isInspiration) || null;
+    if (issue) comments = await gh(`${repoPath()}/issues/${issue.number}/comments?per_page=100`);
+  } catch (e) {
+    if (e.message !== '401') box.innerHTML = '<div class="card faint">Impossible de charger les idées.</div>';
+    return;
+  }
+  const batches = comments.filter(isBot).map(blockOf).filter((b) => b && b.stage === 'ideas');
+  const latest = batches[batches.length - 1];
+  const lab = issue ? labelOf(issue) : null;
+  const busy = issue && (lab === 'script-en-cours' || lab === 'nouveau');
+  const asks = `
+    <div class="card"><div class="faint">Tu veux orienter les idées ? (facultatif)</div>
+      <input type="text" id="guide" value="${esc(guide)}" placeholder="Ex. : plus scientifique, sur l’argent, plus flippant">
+      <div style="margin-top:10px"><button class="btn small" id="more">${latest ? '🔄 8 nouvelles idées' : '✨ Me proposer 8 idées'}</button></div></div>`;
+  let html = '';
+  if (!issue) {
+    html = `<div class="card empty"><div class="big">💡</div><p class="dim" style="margin-top:8px">Claude te propose 8 idées « Et si… » taillées pour TikTok, différentes de tes épisodes déjà faits.</p></div>${asks}`;
+  } else if (busy) {
+    html = `<div class="card"><div class="row spread"><b>💡 Claude cherche des idées…</b><span class="faint">env. 2 min</span></div><div class="progress"><div style="width:45%"></div></div><p class="faint" style="margin-top:10px">Tu peux quitter l’onglet : elles t’attendront.</p></div>`;
+  } else if (lab === 'echec') {
+    html = `<div class="card faint">⚠️ La dernière recherche a échoué.</div>${asks}`;
+  }
+  if (latest && !busy) {
+    html += `<p class="dim">${latest.options.length} idées. Touche « Faire cette vidéo » pour la lancer avec tes réglages.</p>
+      <div class="stack">${latest.options.map((o, k) => `
+        <div class="card idea">
+          ${o.tag ? `<span class="tag">${esc(TAGS[o.tag] || o.tag)}</span>` : ''}
+          <h3>${esc(o.title)}</h3>
+          <div class="pitch">${esc(o.pitch || '')}</div>
+          ${o.angle ? `<div class="angle">🪝 ${esc(o.angle)}</div>` : ''}
+          ${o.fact ? `<div class="fact">📊 ${esc(o.fact)}</div>` : ''}
+          <button class="btn small" data-use="${k}">🎬 Faire cette vidéo</button>
+        </div>`).join('')}</div>${asks}`;
+  }
+  const older = batches.slice(0, -1).reverse().flatMap((b) => b.options);
+  if (older.length && !busy) {
+    html += `<details class="card"><summary>Idées précédentes (${older.length}) ›</summary><div class="stack" style="margin-top:12px">${older.map((o, k) => `
+      <div class="row spread"><span>${esc(o.title)}</span><button class="btn ghost small inline" data-old="${k}">Utiliser</button></div>`).join('')}</div></details>`;
+  }
+  box.innerHTML = html;
+  const use = (o) => {
+    state.prefill = { title: o.title, notes: [o.pitch, o.angle ? `Angle : ${o.angle}` : '', o.fact ? `Fait : ${o.fact}` : ''].filter(Boolean).join('\n') };
+    buzz();
+    route('#/');
+    toast('Idée prête : choisis ton mode et lance-la');
+  };
+  box.querySelectorAll('[data-use]').forEach((b) => (b.onclick = () => use(latest.options[+b.dataset.use])));
+  box.querySelectorAll('[data-old]').forEach((b) => (b.onclick = () => use(older[+b.dataset.old])));
+  const more = document.getElementById('more');
+  if (more) more.onclick = async () => {
+    const g = document.getElementById('guide').value.trim();
+    more.disabled = true;
+    more.innerHTML = '<span class="spinner"></span> Envoi…';
+    try {
+      if (!issue) {
+        await gh(`${repoPath()}/issues`, { method: 'POST', body: JSON.stringify({ title: '💡 Inspiration', body: `<!-- whatif-inspiration -->\nCette issue alimente l’onglet Inspiration de l’app.${g ? `\n\n/ideas ${g}` : ''}` }) });
+      } else {
+        await gh(`${repoPath()}/issues/${issue.number}/comments`, { method: 'POST', body: JSON.stringify({ body: `/ideas${g ? ` ${g}` : ''}` }) });
+      }
+      buzz();
+      toast('Claude cherche 8 idées 💡');
+      setTimeout(() => renderIdeas(), 900);
+    } catch {
+      more.disabled = false;
+      more.textContent = 'Réessayer';
+      toast('Envoi impossible, réessaie.');
+    }
+  };
+  clearInterval(state.timer);
+  if (busy) state.timer = setInterval(() => renderIdeas(true), 15000);
 }
 
 // ---------- an episode ----------
